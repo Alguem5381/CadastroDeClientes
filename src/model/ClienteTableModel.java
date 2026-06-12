@@ -70,5 +70,10 @@ public class ClienteTableModel extends AbstractTableModel{
 		}
 	}
 	
+	public void limparDados() {
+		clientes.clear();
+		fireTableDataChanged();
+	}
+	
 
 }

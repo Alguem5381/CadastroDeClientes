@@ -26,8 +26,18 @@ import model.ClienteTableModel;
 import util.DadosMockados;
 
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.awt.event.ActionEvent;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 public class TelaCadastro extends JFrame {
 
@@ -40,6 +50,10 @@ public class TelaCadastro extends JFrame {
 	private JTable table;
 	private ClienteTableModel modelo;
 	private ArrayList<Cliente> clientes;
+	private FileWriter fileWriter;
+	private BufferedWriter bufferedWriter;
+	private FileReader fileReader;
+	private BufferedReader bufferedReader;
 
 	/**
 	 * Launch the application.
@@ -168,7 +182,13 @@ public class TelaCadastro extends JFrame {
 							"Cliente adicionado com sucesso!", "Sucesso!", 
 							JOptionPane.INFORMATION_MESSAGE);
 				}
+				textNome.setText("");
+				textTelefone.setText("");
+				textEmail.setText("");
+				buttonGroup.clearSelection();
+				
 			}
+			
 		});
 		btnSalvar.setBounds(23, 25, 105, 27);
 		panel_1.add(btnSalvar);
@@ -210,7 +230,121 @@ public class TelaCadastro extends JFrame {
 		table.setModel(modelo);
 		scrollPane.setViewportView(table);
 		
-		String vetor [] = {"Opção 1", "Opção 2", "Opção 3"};
-
+		JMenuBar menuBar = new JMenuBar();
+		menuBar.setBounds(0, 0, 737, 23);
+		contentPane.add(menuBar);
+		
+		JMenu mnNewMenu = new JMenu("Arquivo");
+		menuBar.add(mnNewMenu);
+		
+		JMenuItem mntmAbrir = new JMenuItem("Abrir");
+		mnNewMenu.add(mntmAbrir);
+		mntmAbrir.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser jFileChooser = new JFileChooser();
+				if (jFileChooser.showOpenDialog(TelaCadastro.this) 
+						== JFileChooser.APPROVE_OPTION) {
+					File file = jFileChooser.getSelectedFile();
+					carregarDados(file, modelo);
+						
+				}
+				
+			}
+		});
+		
+		JMenuItem mntmSalvar = new JMenuItem("Salvar");
+		mnNewMenu.add(mntmSalvar);
+		mntmSalvar.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser jFileChooser = new JFileChooser();
+				if (jFileChooser.showSaveDialog(TelaCadastro.this) 
+						== JFileChooser.APPROVE_OPTION) {
+					File file = jFileChooser.getSelectedFile();
+					salvarDados(file, modelo);
+				}
+				
+			}
+		});
+		
+		JMenuItem mntmSair = new JMenuItem("Sair");
+		mntmSair.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				System.exit(0);
+			}
+		});
+		mnNewMenu.add(mntmSair);
+		
+		
+		JMenu mnNewMenuEditar = new JMenu("Editar");
+		menuBar.add(mnNewMenuEditar);
+		
+		JMenu mnNewMenu_2 = new JMenu("Preferências");
+		menuBar.add(mnNewMenu_2);
+		
+		JMenu mnNewMenu_3 = new JMenu("Sobre");
+		menuBar.add(mnNewMenu_3);
+	}
+	
+	private void carregarDados(File file, ClienteTableModel modelo) {
+		try {
+			fileReader = new FileReader(file);
+			bufferedReader = new BufferedReader(fileReader);
+			modelo.limparDados();
+			bufferedReader.readLine();
+			String linha = "";
+			while((linha = bufferedReader.readLine()) != null) {
+				String campos [] = linha.split(",");
+				if (campos.length == 4) {
+					String nome = campos[0];
+					String telefone = campos[1];
+					String email = campos[2];
+					String sexo = campos[3];
+					Cliente cliente = new Cliente(nome, telefone, email, sexo);
+					modelo.addCliente(cliente);
+				}
+			}
+		}catch(IOException e) {
+			e.printStackTrace();
+		}finally {
+			try {
+				bufferedReader.close();
+				fileReader.close();				
+			}catch(IOException e) {
+				e.printStackTrace();
+			}
+		}		
+		
+	}
+	
+	private void salvarDados(File file, ClienteTableModel modelo) {
+		try {
+			fileWriter = new FileWriter(file);
+			bufferedWriter = new BufferedWriter(fileWriter);
+			bufferedWriter.write("Nome,Telefone,Email,Sexo");
+			bufferedWriter.newLine();
+			for (int i=0; i < modelo.getRowCount(); i++) {
+				String nome = (String) modelo.getValueAt(i, 0);
+				String telefone = (String) modelo.getValueAt(i, 1);
+				String email = (String) modelo.getValueAt(i, 2);
+				String sexo = (String) modelo.getValueAt(i, 3);
+				bufferedWriter.write(nome+","+telefone+","+
+				","+email+","+sexo);
+				bufferedWriter.newLine();
+			}
+		}catch(IOException e) {
+			e.printStackTrace();
+		}finally {
+			try {				
+				bufferedWriter.close();
+				fileWriter.close();
+			}catch(IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 	}
 }
