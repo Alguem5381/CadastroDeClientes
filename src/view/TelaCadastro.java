@@ -243,6 +243,16 @@ public class TelaCadastro extends JFrame {
 				String fim = textDataEnd.getText().toString();
 				modelo.atualizarTabela(dao.buscarPorNome(buscarNome));
 				if (checkbox.isSelected()) {
+					if (inicio.isBlank()||fim.isBlank()) {
+						JOptionPane.showMessageDialog(TelaCadastro.this,"Campos em branco!", "Erro!",JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+					try{
+						ClienteValidador.match(inicio, fim);
+					}catch(IllegalArgumentException exception) {
+						JOptionPane.showMessageDialog(TelaCadastro.this,exception.getMessage(), "Erro!",JOptionPane.WARNING_MESSAGE);
+						return;
+					}
 					modelo.atualizarTabela(dao.buscarPorNomeDatas(buscarNome,inicio, fim));
 				}
 				// if (!buscarNome.isBlank()) {
