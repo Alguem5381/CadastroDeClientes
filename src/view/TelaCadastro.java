@@ -33,6 +33,7 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -245,6 +246,11 @@ public class TelaCadastro extends JFrame {
 					}
 
 					modelo.removerCliente(indice);
+				} else {
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							"Selecione um cliente para deletar!", "Alerta",
+							JOptionPane.WARNING_MESSAGE);
+					return;
 				}
 
 			}
@@ -295,7 +301,14 @@ public class TelaCadastro extends JFrame {
 				JFileChooser jFileChooser = new JFileChooser();
 				if (jFileChooser.showOpenDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
 					File file = jFileChooser.getSelectedFile();
-					carregarDados(file, modelo);
+					try {
+						carregarDados(file, modelo);
+					} catch (IllegalStateException e) {
+						JOptionPane.showMessageDialog(TelaCadastro.this,
+								e.getMessage(), "Falha ao ler arquivo",
+								JOptionPane.WARNING_MESSAGE);
+						return;
+					}
 
 				}
 
@@ -364,14 +377,19 @@ public class TelaCadastro extends JFrame {
 	}
 
 	private void carregarDados(File file, ClienteTableModel modelo) {
+		int contagem = 0;
 		try {
 			fileReader = new FileReader(file);
 			bufferedReader = new BufferedReader(fileReader);
+
 			modelo.limparDados();
 			bufferedReader.readLine();
+
 			String linha = "";
+
 			while ((linha = bufferedReader.readLine()) != null) {
 				String campos[] = linha.split(",");
+
 				if (campos.length == 4) {
 					String nome = campos[0];
 					String telefone = campos[1];
@@ -379,11 +397,22 @@ public class TelaCadastro extends JFrame {
 					String sexo = campos[3];
 					String data = campos[4];
 					Cliente cliente = new Cliente(nome, telefone, email, sexo, data);
+
 					modelo.addCliente(cliente);
+
+					contagem++;
 				}
 			}
+		} catch (ArrayIndexOutOfBoundsException e) {
+			e.printStackTrace();
+			throw new IllegalStateException(
+					"Linha %d do documento imcompleta ou corrompida!".formatted(contagem));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Arquivo não encontrado!");
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw new IllegalStateException("Arquivo comrrompido ou leitura comprometida!");
 		} finally {
 			try {
 				bufferedReader.close();
@@ -398,21 +427,26 @@ public class TelaCadastro extends JFrame {
 	private void salvarDados(File file, ClienteTableModel modelo) {
 		try {
 			fileWriter = new FileWriter(file);
+
 			bufferedWriter = new BufferedWriter(fileWriter);
 			bufferedWriter.write("Nome,Telefone,Email,Sexo,Data");
 			bufferedWriter.newLine();
+
 			for (int i = 0; i < modelo.getRowCount(); i++) {
 				String nome = (String) modelo.getValueAt(i, 0);
 				String telefone = (String) modelo.getValueAt(i, 1);
 				String email = (String) modelo.getValueAt(i, 2);
 				String sexo = (String) modelo.getValueAt(i, 3);
 				String data = (String) modelo.getValueAt(i, 4);
-				bufferedWriter.write(nome + "," + telefone + "," +
+
+				bufferedWriter.write(nome + "," + telefone +
 						"," + email + "," + sexo + "," + data);
 				bufferedWriter.newLine();
+
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw new IllegalStateException("Não foi possivel salvar!");
 		} finally {
 			try {
 				bufferedWriter.close();
