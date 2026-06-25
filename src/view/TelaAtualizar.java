@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import model.Cliente;
+import validadores.ClienteValidador;
 
 import java.awt.GridLayout;
 import javax.swing.JLabel;
@@ -34,7 +35,7 @@ public class TelaAtualizar extends JDialog {
 
 	public TelaAtualizar(JFrame parent, Cliente cliente) {
 		super(parent, "Atualizar cliente", true);
-		this.clienteOriginal = cliente;		
+		this.clienteOriginal = cliente;
 		setBounds(100, 100, 461, 231);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -67,19 +68,19 @@ public class TelaAtualizar extends JDialog {
 			contentPanel.add(textFieldEmail);
 			textFieldEmail.setColumns(10);
 		}
-		
+
 		rdbtnMasculino = new JRadioButton("Masculino");
-		contentPanel.add(rdbtnMasculino);	
-	
+		contentPanel.add(rdbtnMasculino);
+
 		rdbtnFeminino = new JRadioButton("Feminino");
 		contentPanel.add(rdbtnFeminino);
-		
+
 		ButtonGroup buttonGroup = new ButtonGroup();
 		buttonGroup.add(rdbtnMasculino);
 		buttonGroup.add(rdbtnFeminino);
-		
+
 		preencherCampos(cliente);
-		
+
 		{
 			JPanel buttonPane = new JPanel();
 			buttonPane.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -107,44 +108,44 @@ public class TelaAtualizar extends JDialog {
 			}
 		}
 	}
-	
+
 	private void preencherCampos(Cliente cliente) {
 		textFieldNome.setText(cliente.getNome());
 		textFieldTelefone.setText(cliente.getTelefone());
 		textFieldEmail.setText(cliente.getEmail());
 		if (cliente.getSexo().equalsIgnoreCase("Masculino")) {
 			rdbtnMasculino.setSelected(true);
-		}else {
+		} else {
 			rdbtnFeminino.setSelected(true);
 		}
 	}
-	
+
 	private void salvar() {
 		String nome = textFieldNome.getText().toString();
-        String telefone = textFieldTelefone.getText().toString();
-        String email = textFieldEmail.getText().toString();
-        String sexo = rdbtnMasculino.isSelected() ? "Masculino" : "Feminino";
+		String telefone = textFieldTelefone.getText().toString();
+		String email = textFieldEmail.getText().toString();
+		String sexo = rdbtnMasculino.isSelected() ? "Masculino" : "Feminino";
 
-        if (nome.isBlank() || telefone.isBlank() || email.isBlank()) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Preencha todos os campos."
-            );
-            return;
-        }
+		if (nome.isBlank() || telefone.isBlank() || email.isBlank()) {
+			JOptionPane.showMessageDialog(
+					this,
+					"Preencha todos os campos.");
+			return;
+		}
 
-        clienteEditado = new Cliente(
-            clienteOriginal.getId(),
-            nome,
-            telefone,
-            email,
-            sexo, 
-			clienteOriginal.getDate()
-        );
+		try {
+			clienteEditado = new ClienteValidador().match(clienteOriginal.getId(), nome, telefone, email, sexo,
+					clienteOriginal.getDate());
+		} catch (IllegalArgumentException ex) {
+			JOptionPane.showMessageDialog(
+					this,
+					ex.getMessage());
+			return;
+		}
 
-        dispose();
+		dispose();
 	}
-	
+
 	public Cliente getClienteEditado() {
 		return this.clienteEditado;
 	}

@@ -3,6 +3,7 @@ package view;
 import java.awt.EventQueue;
 import java.awt.Image;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -25,6 +26,7 @@ import dao.ClienteDAO;
 import model.Cliente;
 import model.ClienteTableModel;
 import util.DadosMockados;
+import validadores.ClienteValidador;
 import util.DataFormatada;
 
 import java.awt.event.ActionListener;
@@ -85,9 +87,9 @@ public class TelaCadastro extends JFrame {
 	public TelaCadastro() {
 		dao = new ClienteDAO();
 		clientes = new ArrayList<Cliente>();
-		//DadosMockados.carregar(clientes);
+		// DadosMockados.carregar(clientes);
 		modelo = new ClienteTableModel(dao.listar());
-		
+
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 737, 658);
@@ -96,7 +98,7 @@ public class TelaCadastro extends JFrame {
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-		
+
 		JLabel lblNewLabel = new JLabel("");
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		ImageIcon image = new ImageIcon(TelaCadastro.class.getResource("/img/cadastro.png"));
@@ -105,106 +107,121 @@ public class TelaCadastro extends JFrame {
 		lblNewLabel.setIcon(new ImageIcon(novaImg));
 		lblNewLabel.setBounds(23, 35, 112, 92);
 		contentPane.add(lblNewLabel);
-		
+
 		JLabel lblNewLabel_1 = new JLabel("CADASTRO DE CLIENTES");
 		lblNewLabel_1.setFont(new Font("Dialog", Font.BOLD, 16));
 		lblNewLabel_1.setBounds(280, 63, 209, 24);
 		contentPane.add(lblNewLabel_1);
-		
+
 		JPanel panel = new JPanel();
 		panel.setBounds(23, 127, 690, 158);
 		contentPane.add(panel);
 		panel.setLayout(null);
-		
+
 		textNome = new JTextField();
 		textNome.setBounds(12, 29, 339, 35);
 		panel.add(textNome);
 		textNome.setColumns(10);
-		
+
 		textEmail = new JTextField();
 		textEmail.setBounds(12, 99, 339, 35);
 		panel.add(textEmail);
 		textEmail.setColumns(10);
-		
+
 		textTelefone = new JTextField();
 		textTelefone.setBounds(393, 29, 285, 35);
 		panel.add(textTelefone);
 		textTelefone.setColumns(10);
-		
+
 		JLabel lblNewLabel_2 = new JLabel("Nome");
 		lblNewLabel_2.setBounds(12, 12, 60, 17);
 		panel.add(lblNewLabel_2);
-		
+
 		JLabel lblNewLabel_3 = new JLabel("E-mail");
 		lblNewLabel_3.setBounds(12, 80, 60, 17);
 		panel.add(lblNewLabel_3);
-		
+
 		JLabel lblNewLabel_4 = new JLabel("Telefone");
 		lblNewLabel_4.setBounds(394, 12, 60, 17);
 		panel.add(lblNewLabel_4);
-		
+
 		JPanel panel_2 = new JPanel();
 		panel_2.setBackground(new Color(255, 255, 255));
 		panel_2.setBounds(393, 99, 285, 35);
 		panel.add(panel_2);
 		panel_2.setLayout(null);
-		
+
 		JRadioButton rdbtnMasculino = new JRadioButton("Masculino");
 		rdbtnMasculino.setBackground(new Color(255, 255, 255));
 		rdbtnMasculino.setBounds(0, 8, 130, 25);
 		panel_2.add(rdbtnMasculino);
-		
+
 		JRadioButton rdbtnFeminino = new JRadioButton("Feminino");
 		rdbtnFeminino.setBackground(new Color(255, 255, 255));
 		rdbtnFeminino.setBounds(155, 8, 130, 25);
 		panel_2.add(rdbtnFeminino);
-		
+
 		ButtonGroup buttonGroup = new ButtonGroup();
 		buttonGroup.add(rdbtnFeminino);
 		buttonGroup.add(rdbtnMasculino);
-		
+
 		JPanel panel_1 = new JPanel();
 		panel_1.setBounds(23, 299, 690, 97);
 		contentPane.add(panel_1);
 		panel_1.setLayout(null);
-		
+
 		JButton btnSalvar = new JButton("Salvar");
-		//ButtonAction action = new ButtonAction();
+		// ButtonAction action = new ButtonAction();
 		btnSalvar.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String nome = textNome.getText().toString();
 				String email = textEmail.getText().toString();
 				String telefone = textTelefone.getText().toString();
 				String sexo = rdbtnMasculino.isSelected() ? "Masculino" : "Feminino";
-				if (nome.isBlank() || email.isBlank() || telefone.isBlank() 
+
+				if (nome.isBlank() || email.isBlank() || telefone.isBlank()
 						|| sexo.isBlank()) {
-					JOptionPane.showMessageDialog(TelaCadastro.this, 
-							"Preencha todos os campos", "Alerta", 
+
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							"Preencha todos os campos", "Alerta",
 							JOptionPane.WARNING_MESSAGE);
-				}else {
-					
-					Cliente cliente = new Cliente(nome, telefone, email, sexo, DataFormatada.FormatarData());
-					modelo.addCliente(cliente);					
-					dao.inserir(cliente);
-					JOptionPane.showMessageDialog(TelaCadastro.this, 
-							"Cliente adicionado com sucesso!", "Sucesso!", 
-							JOptionPane.INFORMATION_MESSAGE);
+					return;
 				}
+
+				Cliente cliente;
+
+				try {
+					cliente = new ClienteValidador().match(nome, telefone, email, sexo, DataFormatada.FormatarData());
+				} catch (IllegalArgumentException ex) {
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							ex.getMessage(), "Alerta",
+							JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
+				modelo.addCliente(cliente);
+				dao.inserir(cliente);
+
+				JOptionPane.showMessageDialog(TelaCadastro.this,
+						"Cliente adicionado com sucesso!", "Sucesso!",
+						JOptionPane.INFORMATION_MESSAGE);
+
 				textNome.setText("");
 				textTelefone.setText("");
 				textEmail.setText("");
 				buttonGroup.clearSelection();
-				
+
 			}
-			
+
 		});
 		btnSalvar.setBounds(23, 25, 105, 27);
 		panel_1.add(btnSalvar);
-		
+
 		JButton btnExcluir = new JButton("Excluir");
 		btnExcluir.addActionListener(new ActionListener() {
+
 			public void actionPerformed(ActionEvent arg0) {
 				int indice = table.getSelectedRow();
 				if (indice >= 0) {
@@ -212,12 +229,12 @@ public class TelaCadastro extends JFrame {
 					dao.excluir(cliente.getId());
 					modelo.removerCliente(indice);
 				}
-				
+
 			}
 		});
 		btnExcluir.setBounds(153, 25, 105, 27);
 		panel_1.add(btnExcluir);
-		
+
 		JButton btnBuscar = new JButton("Buscar");
 		btnBuscar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -237,7 +254,7 @@ public class TelaCadastro extends JFrame {
 		});
 		btnBuscar.setBounds(278, 25, 105, 27);
 		panel_1.add(btnBuscar);
-		
+
 		textBuscar = new JTextField();
 		textBuscar.setBounds(409, 25, 269, 27);
 		panel_1.add(textBuscar);
@@ -264,52 +281,50 @@ public class TelaCadastro extends JFrame {
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(23, 411, 690, 180);
 		contentPane.add(scrollPane);
-		
+
 		table = new JTable();
-		
+
 		table.setModel(modelo);
 		scrollPane.setViewportView(table);
-		
+
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.setBounds(0, 0, 737, 23);
 		contentPane.add(menuBar);
-		
+
 		JMenu mnNewMenu = new JMenu("Arquivo");
 		menuBar.add(mnNewMenu);
-		
+
 		JMenuItem mntmAbrir = new JMenuItem("Abrir");
 		mnNewMenu.add(mntmAbrir);
 		mntmAbrir.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				JFileChooser jFileChooser = new JFileChooser();
-				if (jFileChooser.showOpenDialog(TelaCadastro.this) 
-						== JFileChooser.APPROVE_OPTION) {
+				if (jFileChooser.showOpenDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
 					File file = jFileChooser.getSelectedFile();
 					carregarDados(file, modelo);
-						
+
 				}
-				
+
 			}
 		});
-		
+
 		JMenuItem mntmSalvar = new JMenuItem("Salvar");
 		mnNewMenu.add(mntmSalvar);
 		mntmSalvar.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser jFileChooser = new JFileChooser();
-				if (jFileChooser.showSaveDialog(TelaCadastro.this) 
-						== JFileChooser.APPROVE_OPTION) {
+				if (jFileChooser.showSaveDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
 					File file = jFileChooser.getSelectedFile();
 					salvarDados(file, modelo);
 				}
-				
+
 			}
 		});
-		
+
 		JMenuItem mntmSair = new JMenuItem("Sair");
 		mntmSair.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -317,20 +332,19 @@ public class TelaCadastro extends JFrame {
 			}
 		});
 		mnNewMenu.add(mntmSair);
-		
-		
+
 		JMenu mnNewMenuEditar = new JMenu("Editar");
 		menuBar.add(mnNewMenuEditar);
-		
+
 		JMenuItem mntmAtualizar = new JMenuItem("Atualizar");
 		mntmAtualizar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				int linha = table.getSelectedRow();
 				if (linha < 0) {
-					JOptionPane.showMessageDialog(TelaCadastro.this, "Selecione um cliente para atualizar!", 
+					JOptionPane.showMessageDialog(TelaCadastro.this, "Selecione um cliente para atualizar!",
 							"Aviso", JOptionPane.WARNING_MESSAGE);
 					return;
-				}else {
+				} else {
 					Cliente cliente = modelo.getCliente(linha);
 					TelaAtualizar dialogo = new TelaAtualizar(TelaCadastro.this, cliente);
 					dialogo.setVisible(true);
@@ -342,14 +356,14 @@ public class TelaCadastro extends JFrame {
 			}
 		});
 		mnNewMenuEditar.add(mntmAtualizar);
-		
+
 		JMenu mnNewMenu_2 = new JMenu("Preferências");
 		menuBar.add(mnNewMenu_2);
-		
+
 		JMenu mnNewMenu_3 = new JMenu("Sobre");
 		menuBar.add(mnNewMenu_3);
 	}
-	
+
 	private void carregarDados(File file, ClienteTableModel modelo) {
 		try {
 			fileReader = new FileReader(file);
@@ -357,8 +371,8 @@ public class TelaCadastro extends JFrame {
 			modelo.limparDados();
 			bufferedReader.readLine();
 			String linha = "";
-			while((linha = bufferedReader.readLine()) != null) {
-				String campos [] = linha.split(",");
+			while ((linha = bufferedReader.readLine()) != null) {
+				String campos[] = linha.split(",");
 				if (campos.length == 4) {
 					String nome = campos[0];
 					String telefone = campos[1];
@@ -369,45 +383,45 @@ public class TelaCadastro extends JFrame {
 					modelo.addCliente(cliente);
 				}
 			}
-		}catch(IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
-		}finally {
+		} finally {
 			try {
 				bufferedReader.close();
-				fileReader.close();				
-			}catch(IOException e) {
+				fileReader.close();
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}		
-		
+		}
+
 	}
-	
+
 	private void salvarDados(File file, ClienteTableModel modelo) {
 		try {
 			fileWriter = new FileWriter(file);
 			bufferedWriter = new BufferedWriter(fileWriter);
 			bufferedWriter.write("Nome,Telefone,Email,Sexo,Data");
 			bufferedWriter.newLine();
-			for (int i=0; i < modelo.getRowCount(); i++) {
+			for (int i = 0; i < modelo.getRowCount(); i++) {
 				String nome = (String) modelo.getValueAt(i, 0);
 				String telefone = (String) modelo.getValueAt(i, 1);
 				String email = (String) modelo.getValueAt(i, 2);
 				String sexo = (String) modelo.getValueAt(i, 3);
 				String data = (String) modelo.getValueAt(i, 4);
-				bufferedWriter.write(nome+","+telefone+","+
-				","+email+","+sexo+","+data);
+				bufferedWriter.write(nome + "," + telefone + "," +
+						"," + email + "," + sexo + "," + data);
 				bufferedWriter.newLine();
 			}
-		}catch(IOException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
-		}finally {
-			try {				
+		} finally {
+			try {
 				bufferedWriter.close();
 				fileWriter.close();
-			}catch(IOException e) {
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
 }
