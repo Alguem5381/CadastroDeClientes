@@ -83,7 +83,15 @@ public class TelaCadastro extends JFrame {
 		dao = new ClienteDAO();
 		clientes = new ArrayList<Cliente>();
 		// DadosMockados.carregar(clientes);
-		modelo = new ClienteTableModel(dao.listar());
+
+		try {
+			modelo = new ClienteTableModel(dao.listar());
+		} catch (IllegalStateException ex) {
+			JOptionPane.showMessageDialog(TelaCadastro.this,
+					ex.getMessage(), "Falha de conexão",
+					JOptionPane.WARNING_MESSAGE);
+			return;
+		}
 
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -189,15 +197,20 @@ public class TelaCadastro extends JFrame {
 
 				try {
 					cliente = new ClienteValidador().match(nome, telefone, email, sexo, DataFormatada.FormatarData());
+					dao.inserir(cliente);
 				} catch (IllegalArgumentException ex) {
 					JOptionPane.showMessageDialog(TelaCadastro.this,
 							ex.getMessage(), "Alerta",
 							JOptionPane.WARNING_MESSAGE);
 					return;
+				} catch (IllegalStateException ex) {
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							ex.getMessage(), "Falha de conexão",
+							JOptionPane.WARNING_MESSAGE);
+					return;
 				}
 
 				modelo.addCliente(cliente);
-				dao.inserir(cliente);
 
 				JOptionPane.showMessageDialog(TelaCadastro.this,
 						"Cliente adicionado com sucesso!", "Sucesso!",
@@ -221,7 +234,16 @@ public class TelaCadastro extends JFrame {
 				int indice = table.getSelectedRow();
 				if (indice >= 0) {
 					Cliente cliente = modelo.getCliente(indice);
-					dao.excluir(cliente.getId());
+
+					try {
+						dao.excluir(cliente.getId());
+					} catch (IllegalStateException ex) {
+						JOptionPane.showMessageDialog(TelaCadastro.this,
+								ex.getMessage(), "Falha de conexão",
+								JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+
 					modelo.removerCliente(indice);
 				}
 
@@ -319,8 +341,15 @@ public class TelaCadastro extends JFrame {
 					TelaAtualizar dialogo = new TelaAtualizar(TelaCadastro.this, cliente);
 					dialogo.setVisible(true);
 					if (dialogo.getClienteEditado() != null) {
-						dao.atualizar(dialogo.getClienteEditado());
-						modelo.atualizarTabela(dao.listar());
+						try {
+							dao.atualizar(dialogo.getClienteEditado());
+							modelo.atualizarTabela(dao.listar());
+						} catch (IllegalStateException ex) {
+							JOptionPane.showMessageDialog(TelaCadastro.this,
+									ex.getMessage(), "Falha de conexão",
+									JOptionPane.WARNING_MESSAGE);
+							return;
+						}
 					}
 				}
 			}

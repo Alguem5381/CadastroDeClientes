@@ -10,13 +10,13 @@ import model.Cliente;
 import util.DataFormatada;
 
 public class ClienteDAO {
-	
+
 	public void inserir(Cliente cliente) {
 		String sql = "INSERT INTO clientes "
-				+ "(nome, telefone, email, sexo, data_cadastro) VALUES (?,?,?,?,?)";	
-		
+				+ "(nome, telefone, email, sexo, data_cadastro) VALUES (?,?,?,?,?)";
+
 		try {
-		
+
 			Connection conexao = Conexao.conectar();
 			PreparedStatement stmt = conexao.prepareStatement(sql);
 			stmt.setString(1, cliente.getNome());
@@ -26,15 +26,16 @@ public class ClienteDAO {
 			stmt.setString(5, DataFormatada.FormatarData());
 			System.err.println(DataFormatada.FormatarData());
 			stmt.execute();
-			
+
 			stmt.close();
 			conexao.close();
-			
-		}catch(SQLException e) {
+
+		} catch (SQLException e) {
 			e.printStackTrace();
+			throw new IllegalStateException("Não foi possivel inserir!");
 		}
 	}
-	
+
 	public void excluir(int id) {
 		String sql = "DELETE FROM clientes WHERE id=?";
 		try {
@@ -42,23 +43,24 @@ public class ClienteDAO {
 			PreparedStatement stmt = conexao.prepareStatement(sql);
 			stmt.setInt(1, id);
 			stmt.execute();
-			
+
 			stmt.close();
 			conexao.close();
-			
-		}catch(SQLException e) {
+
+		} catch (SQLException e) {
 			e.printStackTrace();
+			throw new IllegalStateException("Não foi possível excluir!");
 		}
 	}
-	
-	public ArrayList<Cliente> listar(){
+
+	public ArrayList<Cliente> listar() {
 		String sql = "SELECT * FROM clientes";
 		ArrayList<Cliente> clientes = new ArrayList<Cliente>();
 		try {
 			Connection conexao = Conexao.conectar();
 			PreparedStatement stmt = conexao.prepareStatement(sql);
 			ResultSet resultSet = stmt.executeQuery();
-			while(resultSet.next()) {
+			while (resultSet.next()) {
 				String nome = resultSet.getString("nome");
 				String telefone = resultSet.getString("telefone");
 				String email = resultSet.getString("email");
@@ -68,12 +70,13 @@ public class ClienteDAO {
 				Cliente cliente = new Cliente(id, nome, telefone, email, sexo, data);
 				clientes.add(cliente);
 			}
-		}catch(SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
+			throw new IllegalStateException("Não foi possivel listar os clientes!");
 		}
 		return clientes;
 	}
-	
+
 	public void atualizar(Cliente cliente) {
 		String sql = "UPDATE clientes SET nome=?, "
 				+ "telefone=?, email=?, sexo=?, data_cadastro=? WHERE id=?";
@@ -89,8 +92,9 @@ public class ClienteDAO {
 			stmt.executeUpdate();
 			stmt.close();
 			conexao.close();
-		}catch(SQLException e) {
+		} catch (SQLException e) {
 			e.printStackTrace();
+			throw new IllegalStateException("Não foi possível atualizar!");
 		}
 	}
 
