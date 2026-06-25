@@ -7,20 +7,24 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 import model.Cliente;
+import util.DataFormatada;
 
 public class ClienteDAO {
 	
 	public void inserir(Cliente cliente) {
 		String sql = "INSERT INTO clientes "
-				+ "(nome, telefone, email, sexo) VALUES (?,?,?,?)";	
+				+ "(nome, telefone, email, sexo, data_cadastro) VALUES (?,?,?,?,?)";	
 		
 		try {
+		
 			Connection conexao = Conexao.conectar();
 			PreparedStatement stmt = conexao.prepareStatement(sql);
 			stmt.setString(1, cliente.getNome());
 			stmt.setString(2, cliente.getTelefone());
 			stmt.setString(3, cliente.getEmail());
 			stmt.setString(4, cliente.getSexo());
+			stmt.setString(5, DataFormatada.FormatarData());
+			System.err.println(DataFormatada.FormatarData());
 			stmt.execute();
 			
 			stmt.close();
@@ -60,7 +64,8 @@ public class ClienteDAO {
 				String email = resultSet.getString("email");
 				String sexo = resultSet.getString("sexo");
 				int id = resultSet.getInt("id");
-				Cliente cliente = new Cliente(id, nome, telefone, email, sexo);
+				String data = resultSet.getString("data_cadastro");
+				Cliente cliente = new Cliente(id, nome, telefone, email, sexo, data);
 				clientes.add(cliente);
 			}
 		}catch(SQLException e) {
@@ -71,7 +76,7 @@ public class ClienteDAO {
 	
 	public void atualizar(Cliente cliente) {
 		String sql = "UPDATE clientes SET nome=?, "
-				+ "telefone=?, email=?, sexo=? WHERE id=?";
+				+ "telefone=?, email=?, sexo=?, data_cadastro=? WHERE id=?";
 		try {
 			Connection conexao = Conexao.conectar();
 			PreparedStatement stmt = conexao.prepareStatement(sql);
@@ -79,7 +84,8 @@ public class ClienteDAO {
 			stmt.setString(2, cliente.getTelefone());
 			stmt.setString(3, cliente.getEmail());
 			stmt.setString(4, cliente.getSexo());
-			stmt.setInt(5, cliente.getId());
+			stmt.setString(5, cliente.getDate());
+			stmt.setInt(6, cliente.getId());
 			stmt.executeUpdate();
 			stmt.close();
 			conexao.close();

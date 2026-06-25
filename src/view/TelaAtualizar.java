@@ -138,7 +138,8 @@ public class TelaAtualizar extends JDialog {
             nome,
             telefone,
             email,
-            sexo
+            sexo, 
+			clienteOriginal.getDate()
         );
 
         dispose();

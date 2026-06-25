@@ -1,5 +1,9 @@
 package model;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+
 public class Cliente {
 	
 	private String nome;
@@ -7,7 +11,15 @@ public class Cliente {
 	private String email;
 	private String sexo;
 	private int id;
+	private String dataCadastro;
 	
+	public Cliente(String nome, String telefone, String email, String sexo, String dataCadastro) {
+		this.nome = nome;
+		this.telefone = telefone;
+		this.email = email;
+		this.sexo = sexo;
+		this.dataCadastro = dataCadastro;
+	}
 	public Cliente(String nome, String telefone, String email, String sexo) {
 		this.nome = nome;
 		this.telefone = telefone;
@@ -15,13 +27,15 @@ public class Cliente {
 		this.sexo = sexo;
 	}
 	
-	public Cliente(int id, String nome, String telefone, String email, String sexo) {
+	public Cliente(int id, String nome, String telefone, String email, String sexo, String dataCadastro) {
 		this.nome = nome;
 		this.telefone = telefone;
 		this.email = email;
 		this.sexo = sexo;
 		this.id = id;
+		this.dataCadastro = dataCadastro;
 	}
+
 	
 	public int getId() {
 		return this.id;
@@ -50,6 +64,9 @@ public class Cliente {
 	}
 	public void setSexo(String sexo) {
 		this.sexo = sexo;
+	}
+	public String getDate(){
+		return this.dataCadastro;
 	}
 	
 	

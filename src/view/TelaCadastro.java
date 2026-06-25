@@ -25,6 +25,7 @@ import dao.ClienteDAO;
 import model.Cliente;
 import model.ClienteTableModel;
 import util.DadosMockados;
+import util.DataFormatada;
 
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
@@ -178,7 +179,8 @@ public class TelaCadastro extends JFrame {
 							"Preencha todos os campos", "Alerta", 
 							JOptionPane.WARNING_MESSAGE);
 				}else {
-					Cliente cliente = new Cliente(nome, telefone, email, sexo);
+					
+					Cliente cliente = new Cliente(nome, telefone, email, sexo, DataFormatada.FormatarData());
 					modelo.addCliente(cliente);					
 					dao.inserir(cliente);
 					JOptionPane.showMessageDialog(TelaCadastro.this, 
@@ -332,7 +334,8 @@ public class TelaCadastro extends JFrame {
 					String telefone = campos[1];
 					String email = campos[2];
 					String sexo = campos[3];
-					Cliente cliente = new Cliente(nome, telefone, email, sexo);
+					String data = campos[4];
+					Cliente cliente = new Cliente(nome, telefone, email, sexo, data);
 					modelo.addCliente(cliente);
 				}
 			}
@@ -353,15 +356,16 @@ public class TelaCadastro extends JFrame {
 		try {
 			fileWriter = new FileWriter(file);
 			bufferedWriter = new BufferedWriter(fileWriter);
-			bufferedWriter.write("Nome,Telefone,Email,Sexo");
+			bufferedWriter.write("Nome,Telefone,Email,Sexo,Data");
 			bufferedWriter.newLine();
 			for (int i=0; i < modelo.getRowCount(); i++) {
 				String nome = (String) modelo.getValueAt(i, 0);
 				String telefone = (String) modelo.getValueAt(i, 1);
 				String email = (String) modelo.getValueAt(i, 2);
 				String sexo = (String) modelo.getValueAt(i, 3);
+				String data = (String) modelo.getValueAt(i, 4);
 				bufferedWriter.write(nome+","+telefone+","+
-				","+email+","+sexo);
+				","+email+","+sexo+","+data);
 				bufferedWriter.newLine();
 			}
 		}catch(IOException e) {
