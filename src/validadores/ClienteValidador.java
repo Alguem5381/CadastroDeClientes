@@ -5,11 +5,11 @@ import java.util.regex.Pattern;
 import model.Cliente;
 
 public class ClienteValidador {
-    Pattern nomePattern = Pattern.compile("^[A-Za-zÀ-ÿ]+$");
-    Pattern emailPattern = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    Pattern telefonePattern = Pattern.compile("^\\(\\d{2}\\)\\s?\\d{4,5}-\\d{4}$");
+    static Pattern nomePattern = Pattern.compile("^[A-Za-zÀ-ÿ]+$");
+    static Pattern emailPattern = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+    static Pattern telefonePattern = Pattern.compile("^\\(\\d{2}\\)\\s?\\d{4,5}-\\d{4}$");
 
-    public Cliente match(String nome, String telefone, String email, String sexo, String data) {
+    public static Cliente match(String nome, String telefone, String email, String sexo, String data) {
         nome = match(nome, nomePattern, "O nome não é valido! Evite caracteres estranhos ou números");
         telefone = match(telefone, telefonePattern, "O telefone não é valido! Use o formato: (69) 99999-9999");
         email = match(email, emailPattern, "O email não é valido!");
@@ -17,7 +17,7 @@ public class ClienteValidador {
         return new Cliente(nome, telefone, email, sexo, data);
     }
 
-    public Cliente match(int id, String nome, String telefone, String email, String sexo, String data) {
+    public static Cliente match(int id, String nome, String telefone, String email, String sexo, String data) {
         nome = match(nome, nomePattern, "O nome não é valido! Evite caracteres estranhos ou números");
         telefone = match(telefone, telefonePattern, "O telefone não é valido! Use o formato: (69) 99999-9999");
         email = match(email, emailPattern, "O email não é valido!");
@@ -25,7 +25,7 @@ public class ClienteValidador {
         return new Cliente(id, nome, telefone, email, sexo, data);
     }
 
-    public String match(String match, Pattern matchPattern, String message) {
+    private static String match(String match, Pattern matchPattern, String message) {
         if (match == null)
             throw new IllegalArgumentException(message);
 

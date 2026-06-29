@@ -134,7 +134,7 @@ public class TelaAtualizar extends JDialog {
 		}
 
 		try {
-			clienteEditado = new ClienteValidador().match(clienteOriginal.getId(), nome, telefone, email, sexo,
+			clienteEditado = ClienteValidador.match(clienteOriginal.getId(), nome, telefone, email, sexo,
 					clienteOriginal.getDate());
 		} catch (IllegalArgumentException ex) {
 			JOptionPane.showMessageDialog(

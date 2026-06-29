@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.awt.event.ActionEvent;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -197,7 +198,7 @@ public class TelaCadastro extends JFrame {
 				Cliente cliente;
 
 				try {
-					cliente = new ClienteValidador().match(nome, telefone, email, sexo, DataFormatada.FormatarData());
+					cliente = ClienteValidador.match(nome, telefone, email, sexo, DataFormatada.FormatarData());
 					dao.inserir(cliente);
 				} catch (IllegalArgumentException ex) {
 					JOptionPane.showMessageDialog(TelaCadastro.this,
@@ -294,25 +295,23 @@ public class TelaCadastro extends JFrame {
 
 		JMenuItem mntmAbrir = new JMenuItem("Abrir");
 		mnNewMenu.add(mntmAbrir);
-		mntmAbrir.addActionListener(new ActionListener() {
+		mntmAbrir.addActionListener(arg -> {
+			JFileChooser jFileChooser = new JFileChooser();
 
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				JFileChooser jFileChooser = new JFileChooser();
-				if (jFileChooser.showOpenDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
-					File file = jFileChooser.getSelectedFile();
-					try {
-						carregarDados(file, modelo);
-					} catch (IllegalStateException e) {
-						JOptionPane.showMessageDialog(TelaCadastro.this,
-								e.getMessage(), "Falha ao ler arquivo",
-								JOptionPane.WARNING_MESSAGE);
-						return;
-					}
+			if (jFileChooser.showOpenDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
+				File file = jFileChooser.getSelectedFile();
 
+				try {
+					carregarDados(file, modelo);
+				} catch (IllegalStateException e) {
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							e.getMessage(), "Falha ao ler arquivo",
+							JOptionPane.WARNING_MESSAGE);
+					return;
 				}
 
 			}
+
 		});
 
 		JMenuItem mntmSalvar = new JMenuItem("Salvar");
@@ -369,11 +368,203 @@ public class TelaCadastro extends JFrame {
 		});
 		mnNewMenuEditar.add(mntmAtualizar);
 
-		JMenu mnNewMenu_2 = new JMenu("Preferências");
-		menuBar.add(mnNewMenu_2);
+		JMenu mnFerramentas = new JMenu("Ferramentas");
+
+		menuBar.add(mnFerramentas);
+
+		JMenuItem mntmExportar = new JMenuItem("Exportar relatório");
+		JMenuItem mntmImportar = new JMenuItem("Importar CSV validado");
+
+		mnFerramentas.add(mntmExportar);
+		mnFerramentas.add(mntmImportar);
+
+		mntmImportar.addActionListener(arg -> {
+			JFileChooser jFileChooser = new JFileChooser();
+
+			if (jFileChooser.showOpenDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
+				File file = jFileChooser.getSelectedFile();
+
+				ResultadoImportar resultado;
+
+				try {
+					resultado = importarCSVValidado(file);
+				} catch (IllegalStateException | IllegalArgumentException e) {
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							e.getMessage(), "Falha ao importar",
+							JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
+				JOptionPane.showMessageDialog(this, """
+						Importção concluda.
+
+						Registros importados: %d
+						Registros rejeitados: %d
+						""".formatted(resultado.importados, resultado.falhas));
+			}
+		});
+
+		mntmExportar.addActionListener(arg -> {
+			JFileChooser jFileChooser = new JFileChooser();
+
+			if (jFileChooser.showOpenDialog(TelaCadastro.this) == JFileChooser.APPROVE_OPTION) {
+				File file = jFileChooser.getSelectedFile();
+
+				try {
+					exportarRelatorio(file);
+				} catch (IllegalStateException e) {
+					JOptionPane.showMessageDialog(TelaCadastro.this,
+							e.getMessage(), "Falha ao exportar",
+							JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
+				JOptionPane.showMessageDialog(this, "Relatório exportado com sucesso.");
+			}
+		});
 
 		JMenu mnNewMenu_3 = new JMenu("Sobre");
 		menuBar.add(mnNewMenu_3);
+	}
+
+	private void exportarRelatorio(File file) {
+		var mainsb = new StringBuilder();
+
+		mainsb.append("RELATÓRIO DE CLIENTES\n\n");
+		mainsb.append("Data de geração: %s\n\n".formatted(DataFormatada.FormatarData()));
+
+		var sb = new StringBuilder();
+
+		int i;
+		int masculino = 0, feminino = 0;
+
+		for (i = 0; i < modelo.getRowCount(); i++) {
+			String nome = (String) modelo.getValueAt(i, 0);
+			String telefone = (String) modelo.getValueAt(i, 1);
+			String email = (String) modelo.getValueAt(i, 2);
+			String sexo = (String) modelo.getValueAt(i, 3);
+			String data = (String) modelo.getValueAt(i, 4);
+
+			sb.append("""
+					----------------------------------
+					Nome: %s
+					Telefone: %s
+					Email: %s
+					Sexo: %s
+					Data de cadastro: %s
+					""".formatted(nome, telefone, email, sexo, data));
+
+			if (sexo.compareToIgnoreCase("Masculino") == 0)
+				masculino++;
+			else
+				feminino++;
+		}
+
+		sb.append("----------------------------------");
+
+		mainsb.append("""
+				Total de clientes: %d
+				Masculino: %d
+				Feminino: %d
+
+				""".formatted(i, masculino, feminino));
+
+		mainsb.append(sb);
+
+		try {
+			fileWriter = new FileWriter(file);
+			bufferedWriter = new BufferedWriter(fileWriter);
+			bufferedWriter.append(mainsb);
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Erro ao exportar relatório!");
+		} finally {
+			try {
+				bufferedWriter.close();
+				fileWriter.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private record ResultadoImportar(int importados, int falhas) {
+	};
+
+	private ResultadoImportar importarCSVValidado(File file) {
+		var nomeArquivo = file.getName();
+
+		var pontoIndex = nomeArquivo.lastIndexOf('.');
+
+		if (pontoIndex > 0 && pontoIndex < nomeArquivo.length() - 1)
+			if (nomeArquivo.substring(pontoIndex + 1).compareToIgnoreCase("csv") != 0)
+				throw new IllegalArgumentException("O arquivo possui formato inválido!");
+
+		var importados = 0;
+		var falhas = 0;
+
+		var clientes = new ArrayList<Cliente>();
+		String linha = "";
+
+		try {
+			fileReader = new FileReader(file);
+			bufferedReader = new BufferedReader(fileReader);
+
+			var cabeçalho = bufferedReader.readLine();
+
+			if (cabeçalho.isEmpty() || cabeçalho.isBlank())
+				throw new IllegalArgumentException("O arquivo selecionado está vazio!");
+
+			while ((linha = bufferedReader.readLine()) != null) {
+				String campos[] = linha.split(",");
+
+				if (campos.length != 5) {
+					falhas++;
+					continue;
+				}
+
+				String nome = campos[0];
+				String telefone = campos[1];
+				String email = campos[2];
+				String sexo = campos[3];
+				String data = campos[4];
+
+				Cliente cliente;
+
+				try {
+					cliente = ClienteValidador.match(nome, telefone, email, sexo, data);
+				} catch (Exception e) {
+					falhas++;
+					System.out.println("aqui");
+					continue;
+				}
+
+				clientes.add(cliente);
+
+				importados++;
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Arquivo não encontrado!");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Arquivo corrompido ou leitura comprometida!");
+		} finally {
+			try {
+				bufferedReader.close();
+				fileReader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		for (var cliente : clientes)
+			dao.inserir(cliente);
+
+		modelo.atualizarTabela(dao.listar());
+
+		return new ResultadoImportar(importados, falhas);
 	}
 
 	private void carregarDados(File file, ClienteTableModel modelo) {
@@ -390,7 +581,7 @@ public class TelaCadastro extends JFrame {
 			while ((linha = bufferedReader.readLine()) != null) {
 				String campos[] = linha.split(",");
 
-				if (campos.length == 4) {
+				if (campos.length == 5) {
 					String nome = campos[0];
 					String telefone = campos[1];
 					String email = campos[2];
@@ -412,7 +603,7 @@ public class TelaCadastro extends JFrame {
 			throw new IllegalStateException("Arquivo não encontrado!");
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw new IllegalStateException("Arquivo comrrompido ou leitura comprometida!");
+			throw new IllegalStateException("Arquivo corrompido ou leitura comprometida!");
 		} finally {
 			try {
 				bufferedReader.close();
