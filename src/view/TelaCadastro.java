@@ -44,6 +44,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JCheckBox;
 
 public class TelaCadastro extends JFrame {
 
@@ -57,10 +58,14 @@ public class TelaCadastro extends JFrame {
 	private ClienteTableModel modelo;
 	private ArrayList<Cliente> clientes;
 	private FileWriter fileWriter;
+	private JCheckBox checkbox ;
 	private BufferedWriter bufferedWriter;
 	private FileReader fileReader;
 	private BufferedReader bufferedReader;
 	private ClienteDAO dao;
+	private JTextField textDataInit;
+	private JTextField textDataEnd;
+	
 
 	/**
 	 * Launch the application.
@@ -171,7 +176,7 @@ public class TelaCadastro extends JFrame {
 		buttonGroup.add(rdbtnMasculino);
 
 		JPanel panel_1 = new JPanel();
-		panel_1.setBounds(23, 299, 690, 77);
+		panel_1.setBounds(23, 299, 690, 97);
 		contentPane.add(panel_1);
 		panel_1.setLayout(null);
 
@@ -263,10 +268,27 @@ public class TelaCadastro extends JFrame {
 		btnBuscar.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String buscarNome = textBuscar.getText().toString();
-				if (!buscarNome.isBlank()) {
-					int indice = modelo.buscarCliente(buscarNome);
-					table.setRowSelectionInterval(indice, indice);
+				String inicio = textDataInit.getText().toString();
+				String fim = textDataEnd.getText().toString();
+				modelo.atualizarTabela(dao.buscarPorNome(buscarNome));
+				if (checkbox.isSelected()) {
+					if (inicio.isBlank()||fim.isBlank()) {
+						JOptionPane.showMessageDialog(TelaCadastro.this,"Campos em branco!", "Erro!",JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+					try{
+						ClienteValidador.match(inicio, fim);
+					}catch(IllegalArgumentException exception) {
+						JOptionPane.showMessageDialog(TelaCadastro.this,exception.getMessage(), "Erro!",JOptionPane.WARNING_MESSAGE);
+						return;
+					}
+					modelo.atualizarTabela(dao.buscarPorNomeDatas(buscarNome,inicio, fim));
 				}
+				// if (!buscarNome.isBlank()) {
+				// 	int indice = modelo.buscarCliente(buscarNome);
+				// 	table.setRowSelectionInterval(indice, indice);
+				// }
+
 			}
 		});
 		btnBuscar.setBounds(278, 25, 105, 27);
@@ -276,9 +298,27 @@ public class TelaCadastro extends JFrame {
 		textBuscar.setBounds(409, 25, 269, 27);
 		panel_1.add(textBuscar);
 		textBuscar.setColumns(10);
-
+		
+		checkbox = new JCheckBox("Pesquisa por data");
+		checkbox.setBounds(278, 62, 110, 20);
+		panel_1.add(checkbox);
+		
+		textDataInit = new JTextField();
+		textDataInit.setColumns(10);
+		textDataInit.setBounds(409, 59, 96, 27);
+		panel_1.add(textDataInit);
+		
+		textDataEnd = new JTextField();
+		textDataEnd.setColumns(10);
+		textDataEnd.setBounds(582, 59, 96, 27);
+		panel_1.add(textDataEnd);
+		
+		JLabel lblNewLabel_3_1 = new JLabel("até");
+		lblNewLabel_3_1.setBounds(533, 64, 60, 17);
+		panel_1.add(lblNewLabel_3_1);
+		
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(23, 395, 690, 196);
+		scrollPane.setBounds(23, 411, 690, 180);
 		contentPane.add(scrollPane);
 
 		table = new JTable();
